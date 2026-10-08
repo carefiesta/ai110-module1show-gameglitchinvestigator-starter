@@ -4,9 +4,17 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 
 ## 1. What was broken when you started?
 
-- What did the game look like the first time you ran it?
-- List at least two concrete bugs you noticed at the start  
-  (for example: "the hints were backwards").
+The first run looked like a normal Streamlit number guesser: a difficulty sidebar, a guess box, Submit Guess, New Game, and a Developer Debug Info expander. Normal mode said the range was 1 to 100. The game was not playable past a win, and the debug panel did not match what one guess should do.
+
+On the first finished guess, the secret in Developer Debug Info was 17 and I entered 25. History stored only `[25]`, but Attempts jumped to 2 and Score became 5. A too-high guess should say to go lower and should not add points. There was no yellow hint left on the page afterward. The secret was visible in the debug panel, and the only green text was a success-style message, not a lasting hint.
+
+After a correct guess, New Game did change the secret, but Submit Guess stopped doing anything. The guess box could still be typed in, and no new guess was processed. Restarting Streamlit was the only way to get a fresh session.
+
+Concrete bugs at the start:
+
+- One guess is counted as 2 attempts, and that wrong guess raised the score from 0 to 5.
+- The hint does not stay on screen. `st.warning` runs only inside the Submit click, so the next rerun erases it.
+- New Game changes the secret but does not set status back to `"playing"`, so after a win Submit Guess is ignored.
 
 **Bug Reproduction Log**
 
@@ -14,9 +22,9 @@ Document at least 3 bugs you found. Add rows as needed.
 
 | Input | Expected Behavior | Actual Behavior | Console Output / Error |
 |-------|-------------------|-----------------|------------------------|
-| | | | |
-| | | | |
-| | | | |
+| Normal, secret 17, guess 25, Show hint checked | Hint says too high / go lower. Attempts becomes 1. Score stays 0. | History is `[25]`, Attempts is 2, Score is 5. No yellow hint remains after the page settles. | none |
+| Correct secret, then New Game, then another number and Submit Guess | New game starts and Submit Guess compares the new number. | New Game changes the secret. Submit Guess does nothing after the win. | none |
+| New Game while a game is in progress | Secret stays in the sidebar range, attempts reset, and a visible "New game started" message remains. | Secret changes, including off the Easy/Hard range because New Game always rolls 1 to 100. The success message does not stay, because `st.rerun()` wipes it. | none |
 
 ---
 
