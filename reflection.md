@@ -1,4 +1,4 @@
-# 💭 Reflection: Game Glitch Investigator
+# Reflection: Game Glitch Investigator
 
 Answer each question in 3 to 5 sentences. Be specific and honest about what actually happened while you worked. This is about your process, not trying to sound perfect.
 
@@ -18,8 +18,6 @@ Concrete bugs at the start:
 
 **Bug Reproduction Log**
 
-Document at least 3 bugs you found. Add rows as needed.
-
 | Input | Expected Behavior | Actual Behavior | Console Output / Error |
 |-------|-------------------|-----------------|------------------------|
 | Normal, secret 17, guess 25, Show hint checked | Hint says too high / go lower. Attempts becomes 1. Score stays 0. | History is `[25]`, Attempts is 2, Score is 5. No yellow hint remains after the page settles. | none |
@@ -30,30 +28,36 @@ Document at least 3 bugs you found. Add rows as needed.
 
 ## 2. How did you use AI as a teammate?
 
-- Which AI tools did you use on this project (for example: ChatGPT, Gemini, Copilot)?
-- Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
-- Give one example of an AI suggestion you did not accept as written (including what the AI suggested, why you rejected or changed it, and how you verified your version). It does not have to be a suggestion that was wrong: over-engineered, out of scope, harder to read, or a poor fit for this codebase all count.
+I used Grok in the chat while the project was open on my Mac. I did not paste the AI output into the game without checking the running app and the debug panel.
+
+One correct suggestion was the New Game failure. The AI said the button rolled a new secret but never set status back to `playing`, so the next rerun stopped before Submit Guess. I verified that after the fix: New Game cleared attempts and history, showed a new secret, and Submit Guess worked again.
+
+One suggestion I did not accept was the first hint draft. It still told a too-high guess to go higher, which was the original bug with a new function name. I rejected that wording. A guess of 91 against secret 84 then showed "Too High. Go lower." in the app, and the pytest case for 60 against 50 checks the same rule.
 
 ---
 
 ## 3. Debugging and testing your fixes
 
-- How did you decide whether a bug was really fixed?
-- Describe at least one test you ran (manual or using pytest)  
-  and what it showed you about your code.
-- Did AI help you design or understand any tests? How?
+I treated a bug as fixed only when the browser matched the rule, not when the code looked right. The debug panel was useful, but it is rendered before Submit runs, so on the winning click it still said `playing` and score -10 while the green line said "You won! The secret was 84. Final score: 80."
+
+The pytest run reported 8 passed. The starter tests still expect `check_guess(60, 50)` to return the string `"Too High"`. The added test also checks that the hint says to go lower. A manual play confirmed the same path: 91 was too high, 84 won, and New Game started a fresh round.
+
+The AI wrote those pytest cases. I kept the starter return type as a string instead of a tuple, because changing it would have broken the tests that were already in the repo.
 
 ---
 
 ## 4. What did you learn about Streamlit and state?
 
-- How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
+Streamlit reruns the whole script on every click. A variable created in the script is new each time, so the secret has to live in `st.session_state` or it changes every Submit. Session state is the notebook that survives the rerun: secret, attempts, score, and status.
+
+A message such as `st.warning` does not survive by itself. That is why the first hint disappeared. New Game also has to write status back to `playing`, or the next rerun stops and ignores the button.
 
 ---
 
 ## 5. Looking ahead: your developer habits
 
-- What is one habit or strategy from this project that you want to reuse in future labs or projects?
-  - This could be a testing habit, a prompting strategy, or a way you used Git.
-- What is one thing you would do differently next time you work with AI on a coding task?
-- In one or two sentences, describe how this project changed the way you think about AI generated code.
+I want to keep the habit of writing the bug down with the input, the expected result, and the actual panel before editing. The 17 / 25 / attempts 2 / score 5 note made the later fix easy to check.
+
+Next time I would run one fresh game before trusting a debug panel from the middle of a click. I would also reset the score on New Game so a carried penalty does not look like a new bug.
+
+This project changed how I treat AI-generated code. Code that runs can still lie about hints, score, and state, so the AI is a teammate that proposes a cause, and the browser plus pytest decide whether it is true.
